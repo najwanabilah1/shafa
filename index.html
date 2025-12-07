@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mading Digital — MAN Insan Cendekia Bengkulu Tengah</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <h1>Mading Digital</h1>
+      <p class="tag">MAN Insan Cendekia Bengkulu Tengah</p>
+    </div>
+    <nav>
+      <a href="index.html">Beranda</a>
+      <a href="berita.html">Berita</a>
+      <a href="lomba.html">Info Lomba</a>
+      <a href="galeri.html">Galeri</a>
+      <a href="aspirasi.html">Aspirasi</a>
+    </nav>
+    <div class="actions">
+      <button id="loginBtn">Login</button>
+      <div id="userInfo" class="hidden">
+        <span id="userName">Admin</span> 
+        <a href="#" onclick="logout(); return false;" style="color: #e91e63; text-decoration: underline;">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero-section">
+      <div class="hero-content">
+        <h1 class="hero-title">Mading Digital</h1>
+        <p class="hero-subtitle">MAN Insan Cendekia Bengkulu Tengah</p>
+        <p class="hero-desc">Temukan berita terkini, informasi lomba menarik, dan galeri karya siswa terbaik kami</p>
+        <button class="cta-btn" id="heroBtn">Mulai Jelajahi</button>
+      </div>
+      <div class="hero-image" id="heroImage"></div>
+    </section>
+
+    <section class="about-section">
+      <div class="about-content">
+        <h2>Tentang Mading Digital</h2>
+        <p>Mading Digital MAN Insan Cendekia Bengkulu Tengah merupakan platform inovatif untuk menyebarkan informasi penting kepada seluruh warga sekolah. Melalui platform ini, siswa dan guru dapat dengan mudah mengakses berita terkini, informasi perlombaan, serta melihat karya-karya terbaik dari komunitas sekolah kami. Kami berkomitmen untuk menciptakan ekosistem digital yang mendukung kreativitas, kolaborasi, dan transparansi dalam kehidupan sekolah.</p>
+        <a href="#" class="read-more-btn">Pelajari Lebih Lanjut</a>
+      </div>
+      <div class="about-image" id="aboutImage"></div>
+    </section>
+
+    <section class="sections-wrapper vertical">
+      <!-- Berita Section -->
+      <div class="section-box berita-box">
+        <div class="section-header">
+          <h3>Berita Terbaru</h3>
+          <span class="section-icon">📰</span>
+        </div>
+        <div id="newsList" class="card-list horizontal-scroll"></div>
+        <a href="berita.html" class="view-all-btn">Lihat Semua Berita →</a>
+      </div>
+
+      <!-- Info Lomba Section -->
+      <div class="section-box info-box">
+        <div class="section-header">
+          <h3>Info Lomba</h3>
+          <span class="section-icon">🏆</span>
+        </div>
+        <div id="infoList" class="card-list horizontal-scroll"></div>
+        <a href="lomba.html" class="view-all-btn">Lihat Semua Info →</a>
+      </div>
+
+      <!-- Galeri Section -->
+      <div class="section-box gallery-box">
+        <div class="section-header">
+          <h3>Galeri Karya</h3>
+          <span class="section-icon">🎨</span>
+        </div>
+        <div id="galleryList" class="gallery-grid horizontal-scroll"></div>
+        <a href="galeri.html" class="view-all-btn">Lihat Semua Galeri →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">&copy; 2025 Mading Digital MAN Insan Cendekia Bengkulu Tengah</footer>
+
+  <div id="loginModal" class="modal hidden">
+    <form id="loginForm" class="modal-content">
+      <h3>Login</h3>
+      <label>Username<input name="username" required></label>
+      <label>Password<input name="password" type="password" required></label>
+      <div class="modal-actions">
+        <button type="submit">Masuk</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    const heroBtn = document.getElementById("heroBtn");
+    if (heroBtn) {
+      heroBtn.addEventListener("click", () => {
+        const beritaSection = document.querySelector(".berita-box");
+        if (beritaSection) {
+          beritaSection.scrollIntoView({ behavior: "smooth" });
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — Kelola Lomba</title>
+  <link rel="stylesheet" href="css/admin-lomba.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="admin-wrapper">
+    <aside class="admin-sidebar">
+      <h2>🎓 Admin Panel</h2>
+      <p class="subtitle">Kelola Lomba</p>
+
+      <ul class="admin-menu">
+        <li><a href="admin.html">📊 Dashboard</a></li>
+        <li><a href="admin-berita.html">📰 Berita</a></li>
+        <li><a href="#" class="active">🏆 Lomba</a></li>
+        <li><a href="admin-galeri.html">🎨 Galeri</a></li>
+      </ul>
+
+      <div class="admin-divider"></div>
+      <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+    </aside>
+
+    <main class="admin-content">
+      <div class="admin-header">
+        <button id="sidebarToggle" class="hamburger" aria-label="Toggle sidebar">☰</button>
+        <h1>Kelola Lomba</h1>
+        <p>Tambahkan, edit atau hapus informasi lomba sekolah.</p>
+      </div>
+
+      <section class="admin-box" style="background:transparent;padding:0;box-shadow:none;">
+        <div class="table-toolbar" style="display:flex;gap:12px;align-items:left;margin-bottom:12px;">
+          <input id="searchInput" placeholder="Cari lomba..." aria-label="Cari lomba" style="flex:1;padding:14px;border-radius:12px;border:1px solid var(--border);">
+          <button id="addFloating" class="card-action">+ TAMBAH</button>
+        </div>
+
+        <div style="overflow:auto;border-radius:12px;background:var(--card);padding:14px;box-shadow:var(--shadow-sm);width:100%;">
+          <table id="lombaTable" style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="text-align:left;color:var(--text-muted);font-weight:700;">
+                <th style="padding:12px 8px;border-bottom:1px solid var(--border);width:48px;">No</th>
+                <th style="padding:12px 8px;border-bottom:1px solid var(--border);">Judul</th>
+                <th style="padding:12px 8px;border-bottom:1px solid var(--border);">Isi</th>
+                  <th style="padding:12px 8px;border-bottom:1px solid var(--border);width:200px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- rows injected by script -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="tableFooter" style="text-align:center;color:var(--text-muted);padding:18px 0;">Menampilkan 0 dari 0 data</div>
+      </section>
+    </main>
+  </div>
+
+  <div id="sidebarOverlay" class="overlay hidden"></div>
+
+  <!-- Modal Lomba -->
+  <div id="modalLomba" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <h3 id="modalTitle">Tambah Lomba</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+        <input id="modalJudul" placeholder="Judul Lomba" style="padding:10px;border-radius:8px;border:1px solid var(--border);">
+        <textarea id="modalIsi" placeholder="Deskripsi" style="padding:10px;border-radius:8px;border:1px solid var(--border);min-height:120px;"></textarea>
+
+        <!-- file input & preview inserted by JS like Berita -->
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button id="modalCancel" class="card-action" style="background:#777;">Batal</button>
+          <button id="modalSave" class="card-action">Simpan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+
+  <script>
+  // Page-local Lomba CRUD (same UX as Berita)
+  let editingIndex = -1;
+
+  if(!data.lomba) data.lomba = [];
+
+  const modal = document.getElementById('modalLomba');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalJudul = document.getElementById('modalJudul');
+  const modalIsi = document.getElementById('modalIsi');
+
+  // create file input + preview support for multiple images
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.multiple = true;
+  fileInput.style.marginTop = '10px';
+  modalIsi.after(fileInput);
+
+  const previewContainer = document.createElement('div');
+  previewContainer.style.display = 'flex';
+  previewContainer.style.gap = '8px';
+  previewContainer.style.marginTop = '10px';
+  modalIsi.after(previewContainer);
+
+  // holds the DataURL strings of currently selected files in the modal
+  let selectedFilesData = [];
+
+  function clearPreviews(){ previewContainer.innerHTML = ''; }
+  function addPreview(src){ const img = document.createElement('img'); img.src = src; img.style.maxWidth = '120px'; img.style.borderRadius = '10px'; img.style.objectFit = 'cover'; img.style.height = '80px'; previewContainer.appendChild(img); }
+
+  function readFilesAsDataURLs(fileList){
+    const files = Array.from(fileList || []);
+    return Promise.all(files.map(f => new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = e => res(e.target.result);
+      r.onerror = rej;
+      r.readAsDataURL(f);
+    })));
+  }
+
+  fileInput.onchange = () => {
+    const files = fileInput.files;
+    if(!files || files.length === 0) { selectedFilesData = []; clearPreviews(); return; }
+    readFilesAsDataURLs(files).then(arr => {
+      selectedFilesData = arr;
+      clearPreviews(); arr.forEach(addPreview);
+    }).catch(err => { console.error('file read error', err); });
+  };
+
+  function openAddModal(){
+    editingIndex = -1;
+    modalTitle.textContent = 'Tambah Lomba';
+    modalJudul.value = '';
+    modalIsi.value = '';
+    selectedFilesData = [];
+    try{ fileInput.value = ''; }catch(e){}
+    clearPreviews();
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden','false');
+  }
+
+  function openEditModal(i){
+    editingIndex = i;
+    const item = data.lomba[i];
+    modalTitle.textContent = 'Edit Lomba';
+    modalJudul.value = item.judul;
+    modalIsi.value = item.isi;
+    // normalize gambar to array
+    let imgs = item.gambar || [];
+    if(typeof imgs === 'string' && imgs) imgs = [imgs];
+    selectedFilesData = [];
+    try{ fileInput.value = ''; }catch(e){}
+    clearPreviews();
+    (imgs || []).forEach(addPreview);
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden','false');
+  }
+
+  function closeModal(){
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden','true');
+  }
+
+  document.getElementById('modalCancel').onclick = closeModal;
+  modal.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+
+  document.getElementById('modalSave').onclick = async function(){
+    const judul = modalJudul.value.trim();
+    const isi = modalIsi.value.trim();
+    if(!judul){ alert('Judul wajib diisi!'); return; }
+
+    // determine gambar array: prefer newly selected files, otherwise keep existing when editing
+    let gambarArr = [];
+    if(selectedFilesData && selectedFilesData.length > 0){ gambarArr = selectedFilesData.slice(); }
+    else if(editingIndex >= 0){
+      const prev = data.lomba[editingIndex] && data.lomba[editingIndex].gambar || [];
+      gambarArr = (typeof prev === 'string' && prev) ? [prev] : (Array.isArray(prev) ? prev : []);
+    }
+
+    const payload = { judul, isi, gambar: gambarArr };
+
+    if(editingIndex >= 0){ data.lomba[editingIndex] = payload; }
+    else { data.lomba.push(payload); }
+
+    localStorage.setItem('madingData', JSON.stringify(data));
+    closeModal(); renderLombaTable();
+  };
+
+  function hapusLombaLocal(i){ if(!confirm('Hapus lomba ini?')) return; data.lomba.splice(i,1); localStorage.setItem('madingData', JSON.stringify(data)); renderLombaTable(); }
+
+  function renderLombaTable(filterText=''){
+    const tbody = document.querySelector('#lombaTable tbody');
+    const footer = document.getElementById('tableFooter');
+    const filtered = data.lomba.filter(item => (item.judul + item.isi).toLowerCase().includes(filterText.toLowerCase()));
+    tbody.innerHTML = filtered.map((item,i)=>`
+      <tr class="table-row">
+        <td>${i+1}</td>
+        <td>${item.judul}</td>
+        <td>${item.isi}</td>
+        <td>
+          <div class="aksi-wrap">
+            <button class="aksi-btn edit-btn" onclick="openEditModal(${i})"><i class="fas fa-pen"></i> Edit</button>
+            <button class="aksi-btn hapus-btn" onclick="hapusLombaLocal(${i})"><i class="fas fa-trash"></i> Hapus</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    footer.textContent = `Menampilkan ${filtered.length} dari ${data.lomba.length} data`;
+  }
+
+  try{ document.getElementById('addFloating').onclick = openAddModal; }catch(e){}
+  document.getElementById('searchInput').addEventListener('input', e => renderLombaTable(e.target.value));
+  document.addEventListener('DOMContentLoaded', function(){ const addBtn = document.getElementById('addFloating'); if(addBtn) addBtn.addEventListener('click', openAddModal); });
+  renderLombaTable();
+  </script>
+</body>
+</html>

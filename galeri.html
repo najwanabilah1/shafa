@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Galeri Karya — Mading Digital</title>
+  <link rel="stylesheet" href="css/galeri.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <h1>Mading Digital</h1>
+      <p class="tag">MAN Insan Cendekia Bengkulu Tengah</p>
+    </div>
+    <nav>
+      <a href="index.html">Beranda</a>
+      <a href="berita.html">Berita</a>
+      <a href="lomba.html">Info Lomba</a>
+      <a href="galeri.html" class="active">Galeri</a>
+      <a href="aspirasi.html">Aspirasi</a>
+    </nav>
+  </header>
+
+  <!-- ✅ KONTEN GALERI -->
+  <main class="container">
+    <section class="galeri-header">
+      <h2>Galeri Karya Siswa</h2>
+      <p>Dokumentasi kegiatan & karya terbaik siswa</p>
+    </section>
+
+    <section id="list-galeri" class="galeri-grid"></section>
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2025 Mading Digital MAN Insan Cendekia Bengkulu Tengah
+  </footer>
+
+  <!-- ✅ MODAL DETAIL (SCROLLABLE SEPERTI BERITA) -->
+  <div id="glModal" class="gl-modal hidden">
+    <div class="gl-panel">
+      <button class="gl-close" id="glClose">✕</button>
+
+      <img id="glImage" class="gl-image" src="">
+      
+      <div class="gl-content">
+        <h2 id="glTitle"></h2>
+        <div id="glDesc" class="gl-desc"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+
+  <!-- ✅ SCRIPT GALERI -->
+  <script>
+  (function(){
+    const list = document.getElementById('list-galeri');
+    const modal = document.getElementById('glModal');
+    const glImage = document.getElementById('glImage');
+    const glTitle = document.getElementById('glTitle');
+    const glDesc = document.getElementById('glDesc');
+    const glClose = document.getElementById('glClose');
+
+    function getData(){
+      try{
+        const raw = localStorage.getItem('madingData');
+        if(!raw) return [];
+        return JSON.parse(raw).galeri || [];
+      }catch(e){
+        return [];
+      }
+    }
+
+    function render(){
+      const items = getData();
+      if(!items.length){
+        list.innerHTML = "<p style='opacity:.6'>Belum ada galeri.</p>";
+        return;
+      }
+
+      function firstImage(g){
+        if(!g) return '';
+        if(Array.isArray(g)) return g[0] || '';
+        if(typeof g === 'string') return g;
+        return '';
+      }
+
+      list.innerHTML = items.map((it,i)=>`
+        <article class="galeri-card" data-i="${i}">
+          <img src="${firstImage(it.gambar) || ''}" alt="${(it.judul||'')}">
+          <div class="galeri-overlay">
+            <h4>${it.judul || ''}</h4>
+          </div>
+        </article>
+      `).join("");
+
+      document.querySelectorAll(".galeri-card").forEach(card=>{
+        card.onclick = ()=>{
+          const data = items[card.dataset.i];
+          glImage.src = firstImage(data.gambar) || "";
+          glTitle.textContent = data.judul || "";
+          glDesc.innerHTML = data.isi || "Tidak ada deskripsi";
+          modal.classList.remove("hidden");
+        }
+      });
+    }
+
+    glClose.onclick = ()=> modal.classList.add("hidden");
+    modal.onclick = e=>{ if(e.target===modal) modal.classList.add("hidden"); };
+
+    render();
+  })();
+  </script>
+
+</body>
+</html>

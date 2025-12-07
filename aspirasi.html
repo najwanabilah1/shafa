@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Aspirasi — Mading Digital</title>
+  <link rel="stylesheet" href="css/aspirasi.css">
+</head>
+<body>
+
+  <!-- ✅ NAVBAR -->
+  <header class="site-header">
+    <div class="brand">
+      <h1>Mading Digital</h1>
+      <p class="tag">MAN Insan Cendekia Bengkulu Tengah</p>
+    </div>
+    <nav>
+      <a href="index.html">Beranda</a>
+      <a href="berita.html">Berita</a>
+      <a href="lomba.html">Info Lomba</a>
+      <a href="galeri.html">Galeri</a>
+      <a href="aspirasi.html" class="active">Aspirasi</a>
+    </nav>
+  </header>
+
+  <!-- ✅ KONTEN -->
+  <main class="container">
+
+    <section class="aspirasi-header">
+      <h2>Aspirasi Siswa</h2>
+      <p>Sampaikan pengaduan atau saran untuk Madrasah lebih baik</p>
+    </section>
+
+    <!-- ✅ FORM ASPIRASI ANONIM -->
+    <form id="aspirasiForm" class="aspirasi-form">
+
+      <select id="kategori" required>
+        <option value="">-- Pilih Kategori --</option>
+        <option value="Fasilitas">Fasilitas</option>
+        <option value="Layanan">Layanan</option>
+        <option value="Sarana & Prasarana">Sarana & Prasarana</option>
+        <option value="Kegiatan Sekolah">Kegiatan Sekolah</option>
+        <option value="Guru & Pembelajaran">Guru & Pembelajaran</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+
+      <textarea id="isi" rows="5" placeholder="Tuliskan aspirasi kamu secara bebas dan anonim..." required></textarea>
+
+      <button type="submit">Kirim Aspirasi</button>
+
+      <!-- ✅ PESAN BERHASIL -->
+      <p id="successMsg" style="display:none;color:green;font-weight:600;text-align:center;">
+        Aspirasi berhasil dikirim ✅
+      </p>
+
+    </form>
+
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2025 Mading Digital MAN Insan Cendekia Bengkulu Tengah
+  </footer>
+
+<script>
+(function(){
+
+  const form = document.getElementById("aspirasiForm");
+  const successMsg = document.getElementById("successMsg");
+
+  function getData(){
+    try{
+      const raw = localStorage.getItem("aspirasiData");
+      if(!raw) return [];
+      return JSON.parse(raw);
+    }catch(e){
+      return [];
+    }
+  }
+
+  function saveData(data){
+    localStorage.setItem("aspirasiData", JSON.stringify(data));
+  }
+
+  form.onsubmit = function(e){
+    e.preventDefault();
+
+    const kategori = document.getElementById("kategori").value;
+    const isi      = document.getElementById("isi").value.trim();
+
+    if(!kategori || !isi){
+      alert("Lengkapi semua form!");
+      return;
+    }
+
+    const data = getData();
+
+    data.push({
+      kategori,
+      isi,
+      tanggal: new Date().toLocaleString("id-ID")
+    });
+
+    saveData(data);
+    form.reset();
+
+    successMsg.style.display = "block";
+    setTimeout(()=> successMsg.style.display = "none", 3000);
+  };
+
+})();
+</script>
+
+</body>
+</html>
