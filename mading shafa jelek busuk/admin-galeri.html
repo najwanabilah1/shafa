@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — Kelola Galeri</title>
+  <link rel="stylesheet" href="css/admin-galeri.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-wrapper">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="admin-sidebar">
+    <h2>🎓 Admin Panel</h2>
+    <p class="subtitle">Kelola Galeri</p>
+
+    <ul class="admin-menu">
+      <li><a href="admin.html">📊 Dashboard</a></li>
+      <li><a href="admin-berita.html">📰 Berita</a></li>
+      <li><a href="admin-lomba.html">🏆 Lomba</a></li>
+      <li><a href="#" class="active">🎨 Galeri</a></li>
+    </ul>
+
+    <div class="admin-divider"></div>
+    <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+  </aside>
+
+  <!-- ================= KONTEN ================= -->
+  <main class="admin-content">
+    <div class="admin-header">
+      <button id="sidebarToggle" class="hamburger">☰</button>
+      <h1>Kelola Galeri</h1>
+      <p>Kelola karya, foto kegiatan, dan dokumentasi sekolah.</p>
+    </div>
+    <section class="admin-box" style="background:transparent;padding:0;box-shadow:none;">
+
+        <div class="table-toolbar" style="display:flex;gap:12px;align-items:left;margin-bottom:12px;">
+          <input id="searchInput" placeholder="Cari galeri..." aria-label="Cari galeri" style="flex:1;padding:14px;border-radius:12px;border:1px solid var(--border);">
+          <button id="addFloating" class="card-action">+ TAMBAH</button>
+        </div>
+
+        <div style="overflow:auto;border-radius:12px;background:var(--card);padding:14px;box-shadow:var(--shadow-sm);width:100%;">
+          <table id="galeriTable" style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="text-align:left;color:var(--text-muted);font-weight:700;">
+                <th style="padding:12px 8px;border-bottom:1px solid var(--border);width:48px;">No</th>
+                <th style="padding:12px 8px;border-bottom:1px solid var(--border);">Judul</th>
+                <th style="padding:12px 8px;border-bottom:1px solid var(--border);">Deskripsi</th>
+                  <th style="padding:12px 8px;border-bottom:1px solid var(--border);width:200px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- rows injected by script -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="tableFooter" style="text-align:center;color:var(--text-muted);padding:18px 0;">Menampilkan 0 dari 0 data</div>
+
+    </section>
+  </main>
+</div>
+
+<div id="sidebarOverlay" class="overlay hidden"></div>
+
+<!-- ================= MODAL GALERI ================= -->
+<div id="modalGaleri" class="modal hidden">
+  <div class="modal-card">
+    <h3 id="modalTitle">Tambah Galeri</h3>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+      <input id="modalJudul" placeholder="Judul Karya" style="padding:10px;border-radius:8px;border:1px solid var(--border);">
+      <textarea id="modalIsi" placeholder="Deskripsi" style="padding:10px;border-radius:8px;border:1px solid var(--border);min-height:120px;"></textarea>
+
+      <!-- file input & preview will be inserted by JS to match Berita modal styling -->
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="modalCancel" class="card-action" style="background:#777;">Batal</button>
+        <button id="modalSave" class="card-action">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+
+<script>
+let editingIndex = -1;
+
+// Pastikan data.galeri ada
+if (!data.galeri) data.galeri = [];
+
+const modal = document.getElementById('modalGaleri');
+const modalTitle = document.getElementById('modalTitle');
+const modalJudul = document.getElementById('modalJudul');
+const modalIsi = document.getElementById('modalIsi');
+// create file input and preview support (store images as array of DataURLs)
+const fileInput = document.createElement("input");
+fileInput.type = "file";
+fileInput.accept = "image/*";
+fileInput.multiple = true;
+fileInput.style.marginTop = "10px";
+modalIsi.after(fileInput);
+
+const previewContainer = document.createElement('div');
+previewContainer.style.display = 'flex';
+previewContainer.style.gap = '8px';
+previewContainer.style.marginTop = '10px';
+modalIsi.after(previewContainer);
+
+let selectedFilesData = [];
+
+function clearPreviews(){ previewContainer.innerHTML = ''; }
+function addPreview(src){ const img = document.createElement('img'); img.src = src; img.style.maxWidth = '120px'; img.style.borderRadius = '10px'; img.style.objectFit = 'cover'; img.style.height = '80px'; previewContainer.appendChild(img); }
+
+function readFilesAsDataURLs(fileList){
+  const files = Array.from(fileList || []);
+  return Promise.all(files.map(f => new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = rej;
+    r.readAsDataURL(f);
+  })));
+}
+
+fileInput.onchange = () => {
+  const files = fileInput.files;
+  if(!files || files.length === 0){ selectedFilesData = []; clearPreviews(); return; }
+  readFilesAsDataURLs(files).then(arr => { selectedFilesData = arr; clearPreviews(); arr.forEach(addPreview); }).catch(err=>console.error(err));
+};
+
+function openAddModal(){
+  editingIndex = -1;
+  modalTitle.textContent = 'Tambah Galeri';
+  modalJudul.value = '';
+  modalIsi.value = '';
+  selectedFilesData = [];
+  try{ fileInput.value = ''; }catch(e){}
+  clearPreviews();
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+}
+
+function openEditModal(i){
+  editingIndex = i;
+  const item = data.galeri[i];
+  modalTitle.textContent = 'Edit Galeri';
+  modalJudul.value = item.judul;
+  modalIsi.value = item.isi;
+  // normalize existing gambar into previews
+  let imgs = item.gambar || [];
+  if(typeof imgs === 'string' && imgs) imgs = [imgs];
+  selectedFilesData = [];
+  try{ fileInput.value = ''; }catch(e){}
+  clearPreviews();
+  (imgs || []).forEach(addPreview);
+  modal.classList.remove('hidden');
+}
+
+function closeModal(){
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden','true');
+}
+
+document.getElementById("modalCancel").onclick = closeModal;
+
+// Close modal when clicking outside the modal-card
+modal.addEventListener('click', function(e){
+  if(e.target === modal) closeModal();
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' && !modal.classList.contains('hidden')){
+    closeModal();
+  }
+});
+
+document.getElementById("modalSave").onclick = function(){
+  const judul = modalJudul.value.trim();
+  const isi = modalIsi.value.trim();
+  if(!judul){ alert("Judul wajib diisi!"); return; }
+
+  // gambar as array: prefer newly selected files, otherwise preserve existing
+  let gambarArr = [];
+  if(selectedFilesData && selectedFilesData.length > 0){ gambarArr = selectedFilesData.slice(); }
+  else if(editingIndex >= 0){ const prev = data.galeri[editingIndex] && data.galeri[editingIndex].gambar || []; gambarArr = (typeof prev === 'string' && prev) ? [prev] : (Array.isArray(prev) ? prev : []); }
+
+  if(editingIndex >= 0){ data.galeri[editingIndex] = { judul, isi, gambar: gambarArr }; }
+  else { data.galeri.push({ judul, isi, gambar: gambarArr }); }
+
+  localStorage.setItem("madingData", JSON.stringify(data));
+  closeModal();
+  renderGaleriTable();
+};
+
+function hapusGaleriLocal(i){
+  if(!confirm("Hapus galeri ini?")) return;
+  data.galeri.splice(i,1);
+  localStorage.setItem("madingData", JSON.stringify(data));
+  renderGaleriTable();
+}
+
+function renderGaleriTable(filterText=""){
+  const tbody = document.querySelector('#galeriTable tbody');
+  const footer = document.getElementById('tableFooter');
+
+  const filtered = data.galeri.filter(item =>
+    (item.judul + item.isi).toLowerCase().includes(filterText.toLowerCase())
+  );
+
+  tbody.innerHTML = filtered.map((item,i)=>`
+    <tr class="table-row">
+      <td>${i+1}</td>
+      <td>${item.judul}</td>
+      <td>${item.isi}</td>
+      <td>
+        <div class="aksi-wrap">
+          <button class="aksi-btn edit-btn" onclick="openEditModal(${i})">
+            <i class="fas fa-pen"></i> Edit
+          </button>
+          <button class="aksi-btn hapus-btn" onclick="hapusGaleriLocal(${i})">
+            <i class="fas fa-trash"></i> Hapus
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+
+  footer.textContent = `Menampilkan ${filtered.length} dari ${data.galeri.length} data`;
+}
+
+// attach handlers (use addEventListener fallback in case inline assignment fails)
+try{ document.getElementById("addFloating").onclick = openAddModal; }catch(e){}
+document.getElementById("searchInput").addEventListener("input", e => {
+  renderGaleriTable(e.target.value);
+});
+
+document.addEventListener('DOMContentLoaded', function(){
+  const addBtn = document.getElementById('addFloating');
+  if(addBtn){ addBtn.addEventListener('click', openAddModal); }
+});
+
+renderGaleriTable();
+</script>
+
+</body>
+</html>

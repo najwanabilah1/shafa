@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Admin — Mading Digital</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+  <div class="admin-wrapper">
+
+    <!-- ✅ SIDEBAR -->
+    <aside class="admin-sidebar">
+      <h2>🎓 Admin Panel</h2>
+      <p class="subtitle">Kelola Mading Digital</p>
+
+      <ul class="admin-menu">
+        <li><a href="#" class="active">📊 Dashboard</a></li>
+        <li><a href="admin-berita.html">📰 Berita</a></li>
+        <li><a href="admin-lomba.html">🏆 Lomba</a></li>
+        <li><a href="admin-galeri.html">🎨 Galeri</a></li>
+      </ul>
+
+      <div class="admin-divider"></div>
+      <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+    </aside>
+
+    <!-- ✅ MAIN CONTENT -->
+    <main class="admin-content">
+      <div class="admin-header">
+        <button id="sidebarToggle" class="hamburger">☰</button>
+        <h1>Selamat Datang, Admin!</h1>
+        <p>Kelola konten Mading Digital</p>
+      </div>
+
+      <!-- ✅ STATS -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Total Berita</div>
+          <div class="stat-number" id="totalBerita">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total Lomba</div>
+          <div class="stat-number" id="totalLomba">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total Galeri</div>
+          <div class="stat-number" id="totalGaleri">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total Semua Data</div>
+          <div class="stat-number" id="totalAll">0</div>
+        </div>
+      </div>
+
+      <!-- ✅ LIST KRITIK & SARAN -->
+      <div class="dashboard-card" style="margin-top:12px">
+        <h3 class="card-title">📢 Kritik & Saran Masuk</h3>
+        <p class="card-desc">Aspirasi anonim dari siswa</p>
+
+        <!-- ✅ FILTER -->
+        <div class="filter-bar">
+          <button class="active" onclick="setFilter('all')">Semua</button>
+          <button onclick="setFilter('Fasilitas')">Fasilitas</button>
+          <button onclick="setFilter('Layanan')">Layanan</button>
+          <button onclick="setFilter('Sarana')">Sarana</button>
+          <button onclick="setFilter('Kegiatan')">Kegiatan</button>
+          <button onclick="setFilter('Lainnya')">Lainnya</button>
+        </div>
+
+        <!-- ✅ DATA -->
+        <div id="listAspirasi" class="aspirasi-list"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+
+  <script>
+  let currentFilter = "all";
+
+  function setFilter(val){
+    currentFilter = val;
+    document.querySelectorAll(".filter-bar button").forEach(btn=>btn.classList.remove("active"));
+    event.target.classList.add("active");
+    renderAspirasi();
+  }
+
+  function renderAspirasi(){
+    const box = document.getElementById("listAspirasi");
+    const raw = localStorage.getItem("aspirasiData");
+
+    if(!raw){
+      box.innerHTML = "<p style='opacity:.6'>Belum ada aspirasi masuk.</p>";
+      return;
+    }
+
+    const data = JSON.parse(raw).reverse();
+
+    let filtered = data;
+    if(currentFilter !== "all"){
+      filtered = data.filter(item => item.kategori === currentFilter);
+    }
+
+    if(!filtered.length){
+      box.innerHTML = "<p style='opacity:.6'>Belum ada aspirasi pada kategori ini.</p>";
+      return;
+    }
+
+    box.innerHTML = filtered.map(item => {
+      let badge = item.kategori.toLowerCase();
+      return `
+        <div class="aspirasi-item">
+          <div class="aspirasi-header">
+            <span class="badge badge-${badge}">${item.kategori}</span>
+            <span class="aspirasi-tanggal">${item.tanggal}</span>
+          </div>
+          <div class="aspirasi-isi">${item.isi}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function updateStats() {
+    document.getElementById("totalBerita").textContent = data.berita.length;
+    document.getElementById("totalLomba").textContent = data.lomba.length;
+    document.getElementById("totalGaleri").textContent = data.galeri.length;
+    const total = (data.berita?.length || 0) + (data.lomba?.length || 0) + (data.galeri?.length || 0);
+    const el = document.getElementById('totalAll'); if(el) el.textContent = total;
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    updateStats();
+    renderAspirasi();
+  });
+  </script>
+</body>
+</html>
